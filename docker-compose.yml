@@ -1,0 +1,70 @@
+services:
+  backend:
+    image: ${ACR}/ticket-backend:latest
+    restart: unless-stopped
+    environment:
+      AUTH_MODE: keycloak
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: lvmh-tickets
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY}
+    volumes:
+      - backend-data:/data
+    depends_on:
+      - keycloak
+
+  frontend:
+    image: ${ACR}/ticket-frontend:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+  keycloak:
+    image: ${ACR}/keycloak-lvmh:latest
+    restart: unless-stopped
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://pg-keycloak-k8s.postgres.database.azure.com:5432/keycloak
+      KC_DB_USERNAME: kcadmin
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+
+  grafana:
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    restart: unless-stopped
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+
+volumes:
+  backend-data:
+  prometheus-data:
+  grafana-data:
