@@ -1,0 +1,69 @@
+{
+  "realm": "lvmh-tickets",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "loginWithEmailAllowed": false,
+  "duplicateEmailsAllowed": true,
+  "accessTokenLifespan": 1800,
+  "ssoSessionIdleTimeout": 36000,
+  "ssoSessionMaxLifespan": 36000,
+  "loginTheme": "lvmh-dispatch",
+  "internationalizationEnabled": true,
+  "supportedLocales": ["fr"],
+  "defaultLocale": "fr",
+  "displayNameHtml": "<div class=\"lvmh-brand\"><div class=\"lvmh-brand-badge\">AI</div><span>SmartDispatch</span></div>",
+  "roles": {
+    "realm": [
+      { "name": "admin", "description": "Administrateur - accès complet (gestion des utilisateurs, rôles, SLA)" },
+      { "name": "agent", "description": "Agent - accès à son propre espace de tickets" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "ticket-dispatch-frontend",
+      "name": "Ticket Dispatch - Frontend",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:5173/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5173"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5173/*"
+      }
+    },
+    {
+      "clientId": "ticket-dispatch-backend",
+      "name": "Ticket Dispatch - Backend (service account)",
+      "enabled": true,
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "redirectUris": [],
+      "webOrigins": []
+    }
+  ],
+  "users": [
+    {
+      "username": "service-account-ticket-dispatch-backend",
+      "enabled": true,
+      "serviceAccountClientId": "ticket-dispatch-backend",
+      "clientRoles": {
+        "realm-management": ["manage-users", "view-users", "query-users", "view-realm"]
+      }
+    }
+  ]
+}

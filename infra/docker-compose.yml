@@ -1,0 +1,55 @@
+name: lvmh-ticket-keycloak
+
+services:
+  keycloak-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+    volumes:
+      - keycloak_db_data:/var/lib/postgresql/data
+    networks:
+      - keycloak-internal
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    restart: unless-stopped
+    command: start-dev --import-realm
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: "8180"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_HTTP_ENABLED: "true"
+      # Désactive le cache des thèmes : les modifs de infra/keycloak/themes/ se
+      # reflètent sur un simple rechargement de page, sans redémarrer le conteneur
+      # (utile tant qu'on itère sur le CSS ; à retirer pour une vraie prod).
+      KC_SPI_THEME_STATIC_MAX_AGE: "-1"
+      KC_SPI_THEME_CACHE_THEMES: "false"
+      KC_SPI_THEME_CACHE_TEMPLATES: "false"
+    ports:
+      # 8080 est déjà pris par un autre service local (Oracle TNS Listener) sur
+      # cette machine — Keycloak est donc exposé sur 8180 côté hôte (le port
+      # interne du conteneur reste 8080, inchangé).
+      - "8180:8080"
+    volumes:
+      - ./keycloak/import:/opt/keycloak/data/import:ro
+      - ./keycloak/themes/lvmh-dispatch:/opt/keycloak/themes/lvmh-dispatch
+    depends_on:
+      - keycloak-db
+    networks:
+      - keycloak-internal
+      - default
+
+networks:
+  keycloak-internal:
+
+volumes:
+  keycloak_db_data:

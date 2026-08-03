@@ -1,0 +1,555 @@
+:root {
+  --primary-color: #f6c026;
+  --bg-sidebar: #0f0f0f;
+  --bg-main: #f8f9fc;
+  --bg-card: #ffffff;
+  --text-main: #2d3436;
+  --text-muted: #636e72;
+  --border-color: #e2e8f0;
+  --sidebar-active: #1a1a1a;
+  --sidebar-text-muted: #94a3b8;
+  --sidebar-text-active: #ffffff;
+  --sidebar-label: #3d4a5c;
+  --sidebar-border: transparent;
+  --sidebar-divider: rgba(255, 255, 255, 0.08);
+  --status-new: #3498db;
+  --status-assigned: #f39c12;
+  --status-progress: #e67e22;
+  --priority-p1: #ef4444;
+  --priority-p2: #f97316;
+  --priority-p3: #3b82f6;
+  --priority-p4: #94a3b8;
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --transition-speed: 0.3s;
+  --ui-scale: 1;
+  --line-height-base: 1.4;
+  --letter-spacing-base: normal;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--custom-bg, var(--bg-main));
+  color: var(--custom-contents, var(--text-main));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--custom-headings, inherit);
+}
+
+.app-container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  zoom: var(--ui-scale);
+  line-height: var(--line-height-base);
+  letter-spacing: var(--letter-spacing-base);
+}
+
+/* ─────────────────────────────────────────────
+   Accessibility overrides — driven by data-* attributes and inline custom
+   properties set on <html> by AccessibilityContext (see
+   context/AccessibilityContext.jsx). Organized to mirror the three
+   categories in SettingsView.jsx: Navigation, Color, Content.
+   ───────────────────────────────────────────── */
+
+/* Skip-to-content link (Navigation) — invisible until keyboard-focused. */
+.skip-link {
+  position: absolute;
+  top: -60px;
+  left: 12px;
+  z-index: 10000;
+  background: #000;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 0.15s;
+}
+
+.skip-link:focus {
+  top: 12px;
+}
+
+/* Stronger keyboard focus rings, part of the "Navigation clavier" toggle. */
+html[data-keyboard-nav="true"] *:focus-visible {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* ── Color Adjustment ── */
+
+/* Filters (Monochrome / Low / High saturation) — applied to the whole
+   app shell, not just body, so the dark sidebar is affected too. */
+html[data-color-filter="monochrome"] .app-container      { filter: grayscale(1); }
+html[data-color-filter="low-saturation"] .app-container  { filter: saturate(0.35); }
+html[data-color-filter="high-saturation"] .app-container { filter: saturate(2); }
+
+/* Dark High-Contrast — sidebar was already near-black by default, so this
+   mode keeps it dark too (visually cohesive with the rest of the page,
+   which also goes dark) rather than trying to make an already-dark surface
+   look more "dark". */
+html[data-color-filter="dark-contrast"] {
+  --bg-sidebar: #000000;
+  --bg-main: #121212;
+  --bg-card: #1e1e1e;
+  --text-main: #f1f5f9;
+  --text-muted: #b6bec7;
+  --border-color: #3a3a3a;
+  --sidebar-active: #2a2a2a;
+}
+
+/* Bright High-Contrast — unlike the other modes, this one DOES flip the
+   sidebar to light too (was previously left dark, which looked like the
+   sidebar was untouched by the whole "Color Adjustment" category). */
+html[data-color-filter="bright-contrast"] {
+  --bg-sidebar: #ffffff;
+  --bg-main: #ffffff;
+  --bg-card: #ffffff;
+  --text-main: #000000;
+  --text-muted: #1a1a1a;
+  --border-color: #000000;
+  --sidebar-active: #f1f5f9;
+  --sidebar-text-muted: #334155;
+  --sidebar-text-active: #0f172a;
+  --sidebar-label: #64748b;
+  --sidebar-border: #000000;
+  --sidebar-divider: rgba(0, 0, 0, 0.12);
+}
+
+/* Contrast Mode — stark black/yellow, the classic OS "high contrast" scheme. */
+html[data-color-filter="contrast-mode"] {
+  --bg-sidebar: #000000;
+  --bg-main: #000000;
+  --bg-card: #000000;
+  --text-main: #ffffff;
+  --text-muted: #ffffff;
+  --border-color: #ffffff;
+  --sidebar-active: #1a1a1a;
+  --primary-color: #ffdd00;
+}
+
+html[data-color-filter="bright-contrast"] *,
+html[data-color-filter="contrast-mode"] * {
+  border-color: var(--border-color) !important;
+}
+
+/* ── Content Adjustment ── */
+
+/* Text size: scales the whole UI (layout is built on px, not rem, so a
+   root font-size change alone would not cascade — zoom scales everything
+   uniformly, the same effect as native browser zoom). */
+html[data-font-size="large"]  { --ui-scale: 1.125; }
+html[data-font-size="larger"] { --ui-scale: 1.25; }
+
+/* Line / letter spacing */
+html[data-spacing="increased"] {
+  --line-height-base: 1.8;
+  --letter-spacing-base: 0.03em;
+}
+
+/* Larger cursor */
+html[data-cursor-size="large"] {
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24'><path d='M4 2l16 8-6.5 2L11 20z' fill='black' stroke='white' stroke-width='1.5'/></svg>") 4 4, auto;
+}
+
+/* Dyslexia-friendly / readable font: falls back to the default stack if
+   OpenDyslexic isn't installed locally/bundled — still a small readability
+   gain via the fallback order (humanist sans before Inter). */
+html[data-dyslexia-font="true"] {
+  --font-family: 'OpenDyslexic', 'Comic Sans MS', 'Segoe UI', var(--font-family);
+}
+
+/* Highlight links — colored box rather than a plain underline. */
+html[data-highlight-links="true"] a {
+  background: rgba(246, 192, 38, 0.22);
+  border-radius: 4px;
+  padding: 1px 4px;
+  text-decoration: none;
+  box-shadow: 0 0 0 1px rgba(246, 192, 38, 0.5);
+}
+
+/* Highlight headers */
+html[data-highlight-headers="true"] h1,
+html[data-highlight-headers="true"] h2,
+html[data-highlight-headers="true"] h3 {
+  background: rgba(246, 192, 38, 0.16);
+  border-left: 4px solid var(--primary-color);
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+/* Highlight interactive elements */
+html[data-highlight-elements="true"] button,
+html[data-highlight-elements="true"] input,
+html[data-highlight-elements="true"] select,
+html[data-highlight-elements="true"] .stat-card,
+html[data-highlight-elements="true"] .ticket-card {
+  outline: 2px solid var(--primary-color) !important;
+  outline-offset: 2px;
+}
+
+/* Enlarge buttons — bumps text size only (not transform: scale() or extra
+   padding), so it doesn't overflow full-width buttons like the sidebar nav
+   items; many buttons in this app set padding inline, which a stylesheet
+   rule can't override anyway. */
+html[data-enlarge-buttons="true"] button {
+  font-size: 1.15em;
+}
+
+/* Text Reader: brief highlight on the element currently being read aloud
+   (see hooks/useTextReader.js). */
+.a11y-reading {
+  outline: 3px solid var(--primary-color) !important;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 260px;
+  background-color: var(--custom-bg-sidebar, var(--bg-sidebar));
+  color: var(--sidebar-text-active);
+  border-right: 1px solid var(--sidebar-border);
+  display: flex;
+  flex-direction: column;
+  padding: 24px 0;
+  flex-shrink: 0;
+}
+
+.logo-container {
+  padding: 0 24px 40px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-box {
+  width: 32px;
+  height: 32px;
+  background-color: var(--primary-color);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  color: #000;
+  font-size: 14px;
+}
+
+.logo-text {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.nav-item {
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--sidebar-text-muted);
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: all var(--transition-speed);
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  appearance: none;
+}
+
+.nav-item:hover {
+  background-color: var(--sidebar-active);
+  color: var(--sidebar-text-active);
+}
+
+.nav-item.active {
+  background-color: var(--sidebar-active);
+  color: var(--sidebar-text-active);
+  border-right: 3px solid var(--primary-color);
+}
+
+.nav-footer {
+  padding: 24px;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px 40px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+}
+
+.header-title h1 {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #1a1a1a;
+}
+
+.header-title p {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.search-bar {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 300px;
+}
+
+.search-bar input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 14px;
+}
+
+/* Stats Row */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.stat-card {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat-label {
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.stat-trend {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.trend-up { color: #10b981; }
+.trend-down { color: #ef4444; }
+
+/* Kanban Board */
+.kanban-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.kanban-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.column-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 8px;
+  margin-bottom: 8px;
+}
+
+.column-title {
+  font-weight: 600;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.column-count {
+  background: #e2e8f0;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Ticket Card */
+.ticket-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  border: 1px solid transparent;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.ticket-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  border-color: var(--border-color);
+}
+
+.ticket-tags {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tag-priority {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+}
+
+.tag-p1 { background-color: var(--priority-p1); }
+.tag-p2 { background-color: var(--priority-p2); }
+.tag-p3 { background-color: var(--priority-p3); }
+.tag-p4 { background-color: var(--priority-p4); }
+
+.tag-category {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ticket-confidence {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.ticket-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.ticket-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.ticket-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 12px;
+}
+
+.ticket-agent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.agent-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #e2e8f0;
+}
+
+.ticket-time {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Glassmorphism utility */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+@keyframes toast-slide-in {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.toast-item {
+  animation: toast-slide-in 0.2s ease-out;
+}

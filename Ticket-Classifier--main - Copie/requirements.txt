@@ -1,0 +1,22 @@
+# LVMH Ticket Auto-Classification - Dependencies
+# EY Data Team - Module 1
+
+crewai>=0.80.0
+crewai-tools>=0.20.0
+openai>=1.55.0
+fastapi>=0.115.0
+uvicorn>=0.32.0
+pydantic>=2.9.0
+pandas>=2.2.0
+openpyxl>=3.1.0
+python-dotenv>=1.0.0
+langchain-openai>=0.2.0
+groq>=0.11.0
+litellm>=1.40.0
+PyJWT[crypto]>=2.9.0
+python-multipart>=0.0.9
+APScheduler>=3.10.4
+bcrypt>=4.0.0
+requests>=2.32.0
+tqdm>=4.66.0
+tabulate>=0.9.0

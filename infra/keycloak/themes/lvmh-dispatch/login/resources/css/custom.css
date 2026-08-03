@@ -1,0 +1,98 @@
+/* Thème de connexion Keycloak — SmartDispatch.
+   Surcharge keycloak.v2 (PatternFly v5) : remplace le fond/logo par défaut et
+   reprend la palette de l'app (marine #0f172a/#1e293b, doré #f6c026) plutôt que
+   de dupliquer tout le template login.ftl. */
+
+.login-pf body {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+  background-size: cover;
+}
+
+/* PatternFly bascule par défaut sur un layout 2 colonnes ("main" à gauche,
+   "header"/"footer" à droite) au-delà d'un certain viewport (variable
+   --pf-v5-c-login__container--xl--GridTemplateColumns). On force 1 seule
+   colonne empilée (logo en haut, formulaire en dessous), centrée, quelle que
+   soit la largeur d'écran. */
+.pf-v5-c-login__container {
+  grid-template-columns: minmax(auto, 28rem) !important;
+  grid-template-areas: "header" "main" "footer" !important;
+  justify-items: center;
+}
+
+.pf-v5-c-login__header {
+  margin-block-start: 0 !important;
+  text-align: center;
+  width: 100%;
+}
+
+/* Bandeau de marque (logo + nom du realm, injecté via realm.displayNameHtml).
+   Classes plutôt que style inline dans displayNameHtml : l'API admin de
+   Keycloak assainit les attributs style= et retire des propriétés (constaté :
+   display/align-items/justify-content disparaissent silencieusement), donc
+   tout le layout se fait ici où on contrôle le CSS servi directement. */
+#kc-header-wrapper {
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.lvmh-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.lvmh-brand-badge {
+  width: 32px;
+  height: 32px;
+  background: #f6c026;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+/* Carte contenant le formulaire */
+.pf-v5-c-login__main {
+  border-radius: 16px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.35);
+}
+
+#kc-page-title {
+  color: #1e293b;
+  font-weight: 700;
+}
+
+/* Bouton principal (Se connecter / Sign In) */
+.pf-v5-c-button.pf-m-primary {
+  background-color: #f6c026 !important;
+  border-color: #f6c026 !important;
+  color: #0f172a !important;
+  font-weight: 700;
+}
+
+.pf-v5-c-button.pf-m-primary:hover,
+.pf-v5-c-button.pf-m-primary:focus {
+  background-color: #e0ac1a !important;
+  border-color: #e0ac1a !important;
+}
+
+/* Champs de saisie : anneau de focus doré plutôt que le bleu PatternFly par défaut */
+.pf-v5-c-form-control:focus-within {
+  border-color: #f6c026 !important;
+  box-shadow: 0 0 0 1px #f6c026 !important;
+}
+
+a,
+a:visited {
+  color: #b8860b;
+}
+
+a:hover {
+  color: #8a6508;
+}
