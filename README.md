@@ -157,7 +157,8 @@ npm run dev                 # http://localhost:5173
 ```
 
 Full setup, environment variables, and troubleshooting live in the backend's own
-[`README.md`](Ticket-Classifier--main%20-%20Copie/README.md).
+[`README.md`](Ticket-Classifier--main%20-%20Copie/README.md); frontend-specific details (views,
+accessibility, i18n, shared utilities) live in [`frontend/README.md`](frontend/README.md).
 
 ## Configuration
 
@@ -197,6 +198,7 @@ npm run lint
 | [`Ticket-Classifier--main - Copie/README.md`](Ticket-Classifier--main%20-%20Copie/README.md) | Backend setup, full API reference, formulas, data files |
 | [`Ticket-Classifier--main - Copie/.claude/CLAUDE.md`](Ticket-Classifier--main%20-%20Copie/.claude/CLAUDE.md) | Deep engineering reference: module-by-module file map, known issues |
 | [`Ticket-Classifier--main - Copie/DESCRIPTION_PFE.md`](Ticket-Classifier--main%20-%20Copie/DESCRIPTION_PFE.md) | Full technical write-up in French (PFE report) — design rationale, audits, limitations |
+| [`frontend/README.md`](frontend/README.md) | Frontend views, auth, accessibility/i18n, shared utilities |
 
 ## Credits
 
