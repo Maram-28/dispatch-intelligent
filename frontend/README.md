@@ -1,82 +1,84 @@
-# AI Ticket Dispatch System (LVMH)
+# SmartDispatch — Frontend
 
-An intelligent, multi-agent system powered by **CrewAI** and **FastAPI** designed to automate ticket classification, priority calculation, and SLA monitoring with a premium React dashboard.
+React 19 + Vite dashboard for the LVMH ticket classification/dispatch system. Consumes the
+[backend API](../Ticket-Classifier--main%20-%20Copie/) over HTTP at a hardcoded
+`http://localhost:8000` base URL (`src/utils/api.js`).
 
+For the full project overview (architecture, screenshots, both projects together), see the
+[root README](../README.md).
 
+## Setup
 
-## 🌟 Key Features
-
-- **AI Multi-Agent Pipeline**: Uses a triple-agent architecture (Analyst, Classifier, Validator) to ensure high-accuracy classification.
-- **Interactive Dashboard**: A modern React-based Kanban board for managing tickets in real-time.
-- **Agent Performance Tracking**: Monitor AI agent workloads, skills, and resolution rates.
-- **SLA Monitoring**: Automatic identification of critical (P1) and warning-level tickets.
-- **Persistence Layer**: All classifications are stored locally in `data/output/classifications_db.json` for history tracking.
-
-## 📂 Project Structure
-
-```text
-Ticket Agent/
-📂 assets/             # Project screenshots and media
-📂 data/               # Input/Output data and persistent DB
-📂 frontend/           # React (Vite) Frontend Application
-📂 src/                # Core Logic
-  📄 api.py            # FastAPI Backend with CORS & Persistence
-  📂 agents/           # CrewAI Agent definitions
-📂 tests/              # API and logic testing suite
-📄 run_backend.py      # Entry point for Backend
-📄 README.md           # Documentation
+```powershell
+npm install
+npm run dev        # http://localhost:5173
+npm run build
+npm run lint
 ```
 
-## 🚀 Setup & Running (Windows)
+## Authentication
 
-### 1. Backend Setup
+Keycloak-only: `src/utils/api.js` hardcodes an `oidc-client-ts` `UserManager` for the
+Authorization Code + PKCE flow. There is no username/password form anywhere in the UI —
+`LoginPage.jsx` only shows a redirect-to-Keycloak / retry screen. `apiFetch()` attaches the
+current access token to every request, retries once via `signinSilent()` on a 401, and falls back
+to a full `signinRedirect()` if that fails.
 
-1. Create and activate virtual environment:
-   ```powershell
-   python -m venv venv
-   .\venv\Scripts\activate
-   ```
-2. Install dependencies:
-   ```powershell
-   pip install -r requirements.txt
-   ```
-3. Run the backend:
-   ```powershell
-   python run_backend.py
-   ```
-   _API Docs: http://localhost:8000/docs_
+## Active views
 
-### 2. Frontend Setup
+| View | Role | Notes |
+|---|---|---|
+| `DashboardView` | Admin | Kanban (New / Assigned / In Progress / Done) + stats |
+| `AgentsView` | Admin | Team member profiles, skills, workload, availability |
+| `SLAMonitorView` | Admin | Team-wide SLA compliance, alert feed, manual "Scanner maintenant" trigger |
+| `AgentView` | Agent | Sidebar shell (My Tickets / Notifications / My Profile / Settings) wrapping the views below |
+| `views/agent/AgentDashboardView` | Agent | Own assigned tickets, status lifecycle, `CountdownTimer` |
+| `views/agent/AgentNotificationsView` | Agent | Persisted in-app notification inbox |
+| `views/agent/AgentProfileView` | Agent | Own profile + performance |
+| `SettingsView` | Both | Accessibility panel (see below) |
 
-1. Open a new terminal in the `frontend` directory:
-   ```powershell
-   cd frontend
-   npm install
-   ```
-2. Start the dashboard:
-   ```powershell
-   npm run dev
-   ```
-   _Dashboard Access: http://localhost:5173_
+**Stubs (UI only, no logic):** search/filter, Kanban drag-and-drop.
 
-## 🛠️ AI System Architecture
+## Real-time notifications
 
-The classification process involves three distinct agents:
+`hooks/useNotifications.js` opens an `EventSource` to `GET /agent/notifications/stream`. Since
+`EventSource` can't set custom headers, the real auth token never goes in the query string:
+`App.jsx` first calls `POST /agent/notifications/sse-ticket` to mint a 60s single-use ticket, then
+opens the stream with `?ticket=...`. That single-use ticket breaks native auto-reconnect, so
+`App.jsx` reconnects manually (re-mint + reopen, backoff up to ~15s) on `onerror`. Each event fans
+out to sound, an in-page toast (`components/ToastContainer.jsx`), and the browser `Notification`
+API.
 
-1. **IT ServiceNow Analyst**: Extracts intent and identifies the core service.
-2. **ITIL Classifier**: Assigns taxonomy labels and calculates priority using a matrix tool.
-3. **Quality Auditor**: Validates the JSON structure and provides definitive reasoning.
+## Accessibility & internationalization
 
-|        API Input (Raw)         |     API Output (Classified)      |
-| :----------------------------: | :------------------------------: |
-| ![Input](assets/api_input.png) | ![Output](assets/api_output.png) |
+- **Accessibility** (`context/AccessibilityContext.jsx`, `hooks/useAccessibility.js`,
+  `hooks/useTextReader.js`, `components/SkipLink.jsx`): font size, spacing, cursor size, color
+  filters (incl. custom HSL background/heading/content colors), link/element highlighting,
+  enlarged buttons, keyboard-nav mode, a dyslexia-friendly font, and click-to-read text-to-speech
+  via the browser's native `SpeechSynthesis` API. Settings persist to `localStorage`
+  (`smartdispatch_accessibility`) and apply globally via `data-*` attributes/CSS custom properties
+  on `document.documentElement`.
+- **i18n** (`i18n/i18n.js`, `i18n/translations.js`, `hooks/useLanguage.js`,
+  `components/LanguageToggle.jsx`): EN/FR via `react-i18next`, a flat ~150-key dictionary,
+  persisted to `localStorage` (`smartdispatch_language`), syncing `document.documentElement.lang`.
 
-## 📊 Modules Preview
+## Shared utilities
 
-|         Agent Profiles          |      SLA Monitoring       |
-| :-----------------------------: | :-----------------------: |
-| ![Agents](assets/ui_agents.jpg) | ![SLA](assets/ui_sla.jpg) |
+- `components/DateRangeFilter.jsx` + `utils/dateRange.js` — one client-side date-range filter
+  (custom start/end, default = 1st of the month to today) shared by Dashboard, Agents, SLA
+  Monitor, and Agent Profile.
+- `utils/sla.js` — a JS reimplementation of the backend's business-hours SLA math (same Mon–Fri
+  07:00–19:00 bounds, same pause-freeze semantics), used by `SLAMonitorView`, `DashboardView`,
+  `AgentProfileView`, and `CountdownTimer` so the countdown never disagrees with the server.
+  Intentionally mirrors `sla_engine.py` — if you change the business-hours logic on one side,
+  mirror it on the other.
+- `utils/formatDate.js` — locale-aware date/time/number formatting (`fr-FR` vs `en-US`) driven by
+  the current language.
 
----
+## Tech stack
 
-_Developed for the EY Data Team - Module 1_
+React 19 · Vite · `react-i18next` · `oidc-client-ts` · Framer Motion · `lucide-react`
+
+## Design token
+
+`--primary-color: #f6c026` (LVMH gold).
