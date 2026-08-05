@@ -21,7 +21,7 @@ jobs:
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v4
         with:
-          args:  -Dsonar.organization=maram-28  -Dsonar.projectKey=Maram-28_dispatch-intelligent -Dsonar.sources=Ticket-Classifier--main - Copie
+          args: -Dsonar.organization=maram-28 -Dsonar.projectKey=Maram-28_dispatch-intelligent "-Dsonar.sources=Ticket-Classifier--main - Copie"
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
