@@ -1,0 +1,38 @@
+name: Keycloak CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'infra/keycloak/**'
+      - '.github/workflows/deploy-keycloak.yml'
+
+env:
+  ACR: acrticketk8s.azurecr.io
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to ACR
+        run: echo "${{ secrets.ACR_PASSWORD }}" | docker login $ACR -u "${{ secrets.ACR_USERNAME }}" --password-stdin
+
+      - name: Build & push
+        run: |
+          docker build -t $ACR/keycloak-lvmh:${{ github.sha }} -t $ACR/keycloak-lvmh:latest ./infra/keycloak
+          docker push $ACR/keycloak-lvmh:${{ github.sha }}
+          docker push $ACR/keycloak-lvmh:latest
+
+      - name: Deploy keycloak only
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: azureuser
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            cd ~/app
+            docker login acrticketk8s.azurecr.io -u "${{ secrets.ACR_USERNAME }}" -p "${{ secrets.ACR_PASSWORD }}"
+            docker compose pull keycloak
+            docker compose up -d keycloak

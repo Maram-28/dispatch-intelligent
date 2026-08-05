@@ -1,0 +1,50 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Ticket-Classifier--main - Copie/**'
+      - '.github/workflows/deploy-backend.yml'
+
+env:
+  ACR: acrticketk8s.azurecr.io
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v4
+        with:
+          projectBaseDir: "Ticket-Classifier--main - Copie"
+          args: >
+            -Dsonar.organization=<TON_ORG_SONARCLOUD>
+            -Dsonar.projectKey=<TON_PROJECT_KEY_BACKEND>
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Log in to ACR
+        run: echo "${{ secrets.ACR_PASSWORD }}" | docker login $ACR -u "${{ secrets.ACR_USERNAME }}" --password-stdin
+
+      - name: Build & push
+        run: |
+          docker build -t $ACR/ticket-backend:${{ github.sha }} -t $ACR/ticket-backend:latest "./Ticket-Classifier--main - Copie"
+          docker push $ACR/ticket-backend:${{ github.sha }}
+          docker push $ACR/ticket-backend:latest
+
+      - name: Deploy backend only
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: azureuser
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            cd ~/app
+            docker login acrticketk8s.azurecr.io -u "${{ secrets.ACR_USERNAME }}" -p "${{ secrets.ACR_PASSWORD }}"
+            docker compose pull backend
+            docker compose up -d backend
