@@ -21,10 +21,7 @@ jobs:
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v4
         with:
-          args: >
-             -Dsonar.organization=maram-28
-            -Dsonar.projectKey=Maram-28_dispatch-intelligent
-            -Dsonar.sources=frontend
+          args:  -Dsonar.organization=maram-28 -Dsonar.projectKey=Maram-28_dispatch-intelligent -Dsonar.sources=frontend
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
