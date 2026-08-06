@@ -17,14 +17,19 @@ services:
     image: ${ACR}/ticket-frontend:latest
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "8081:80"
     depends_on:
       - backend
 
   keycloak:
     image: ${ACR}/keycloak-lvmh:latest
+    entrypoint: ["/opt/keycloak/bin/kc.sh", "start", "--import-realm"]
     restart: unless-stopped
+    ports:
+      - "8080:8080"
     environment:
+      KC_HOSTNAME: https://smartdispatch-tickets.polandcentral.cloudapp.azure.com/auth
+      KC_PROXY_HEADERS: xforwarded
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://pg-keycloak-k8s.postgres.database.azure.com:5432/keycloak
       KC_DB_USERNAME: kcadmin
