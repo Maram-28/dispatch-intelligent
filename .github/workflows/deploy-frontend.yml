@@ -30,7 +30,10 @@ jobs:
 
       - name: Build & push
         run: |
-          docker build -t $ACR/ticket-frontend:${{ github.sha }} -t $ACR/ticket-frontend:latest ./frontend
+          docker build \
+            --build-arg VITE_KEYCLOAK_URL=https://smartdispatch-tickets.polandcentral.cloudapp.azure.com/auth \
+            --build-arg VITE_API_BASE=https://smartdispatch-tickets.polandcentral.cloudapp.azure.com/api \
+            -t $ACR/ticket-frontend:${{ github.sha }} -t $ACR/ticket-frontend:latest ./frontend
           docker push $ACR/ticket-frontend:${{ github.sha }}
           docker push $ACR/ticket-frontend:latest
 
