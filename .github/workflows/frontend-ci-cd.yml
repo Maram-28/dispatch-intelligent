@@ -1,0 +1,86 @@
+name: Frontend CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci-cd.yml'
+  workflow_dispatch: {}
+
+env:
+  ACR_LOGIN_SERVER: acrticketk8s.azurecr.io
+  IMAGE_NAME: ticket-frontend
+  CONTAINER_APP: frontend-smartdispatch
+  RESOURCE_GROUP: rg-smartdispatch-prod
+
+jobs:
+  lint:
+    name: ESLint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install deps
+        working-directory: frontend
+        run: npm ci
+      - name: Run ESLint
+        working-directory: frontend
+        run: npm run lint
+
+  build-scan-push:
+    name: Build, scan (Trivy) & push
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute short SHA tag
+        id: vars
+        run: echo "image_tag=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Docker login to ACR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Les URLs Keycloak/backend sont compilées en dur au build (Vite) —
+      # elles ne peuvent pas être changées au runtime, contrairement au backend.
+      - name: Build & push image
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          push: true
+          build-args: |
+            VITE_KEYCLOAK_URL=${{ vars.VITE_KEYCLOAK_URL }}
+            VITE_API_BASE=${{ vars.VITE_API_BASE }}
+          tags: |
+            ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.image_tag }}
+            ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.image_tag }}
+          format: table
+          severity: CRITICAL,HIGH
+          exit-code: '0'
+
+      - name: Print manual deploy command
+        run: |
+          echo "### Déploiement manuel requis" >> "$GITHUB_STEP_SUMMARY"
+          echo '```powershell' >> "$GITHUB_STEP_SUMMARY"
+          echo "az containerapp update \`" >> "$GITHUB_STEP_SUMMARY"
+          echo "  --name ${{ env.CONTAINER_APP }} \`" >> "$GITHUB_STEP_SUMMARY"
+          echo "  --resource-group ${{ env.RESOURCE_GROUP }} \`" >> "$GITHUB_STEP_SUMMARY"
+          echo "  --image ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.image_tag }}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"

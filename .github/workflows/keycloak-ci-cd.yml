@@ -1,0 +1,66 @@
+name: Keycloak CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'infra/keycloak/**'
+      - '.github/workflows/keycloak-ci-cd.yml'
+  workflow_dispatch: {}
+
+env:
+  ACR_LOGIN_SERVER: acrticketk8s.azurecr.io
+  IMAGE_NAME: keycloak-lvmh
+  CONTAINER_APP: keycloak-smartdispatch
+  RESOURCE_GROUP: rg-smartdispatch-prod
+
+jobs:
+  build-scan-push:
+    name: Build, scan (Trivy) & push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute short SHA tag
+        id: vars
+        run: echo "image_tag=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Docker login to ACR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & push image
+        uses: docker/build-push-action@v6
+        with:
+          context: infra/keycloak
+          push: true
+          tags: |
+            ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.image_tag }}
+            ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.image_tag }}
+          format: table
+          severity: CRITICAL,HIGH
+          exit-code: '0'
+
+      # command/args (kc.sh start --import-realm, sans --optimized) doivent être
+      # préservés au déploiement — voir notes projet sur le fix du crash
+      # "--optimized" au premier déploiement. --image seul les laisse inchangés.
+      - name: Print manual deploy command
+        run: |
+          echo "### Déploiement manuel requis" >> "$GITHUB_STEP_SUMMARY"
+          echo '```powershell' >> "$GITHUB_STEP_SUMMARY"
+          echo "az containerapp update \`" >> "$GITHUB_STEP_SUMMARY"
+          echo "  --name ${{ env.CONTAINER_APP }} \`" >> "$GITHUB_STEP_SUMMARY"
+          echo "  --resource-group ${{ env.RESOURCE_GROUP }} \`" >> "$GITHUB_STEP_SUMMARY"
+          echo "  --image ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.image_tag }}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
