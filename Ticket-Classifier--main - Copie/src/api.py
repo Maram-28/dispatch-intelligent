@@ -595,8 +595,12 @@ def _dispatch_priority_escalation(payload: "PriorityChangeWebhook") -> None:
     from src.notifications.dispatcher import NotificationDispatcher
 
     old_p, new_p = payload.old_priority.strip(), payload.new_priority.strip()
-    was_critical = old_p == SN_CRITICAL_PRIORITY
-    is_critical = new_p == SN_CRITICAL_PRIORITY
+    # ServiceNow peut envoyer soit la valeur brute ("1") soit le libellé complet
+    # ("1 - Critical") selon comment la Business Rule lit le champ — on normalise
+    # avec le même helper que pour impact/urgence plutôt qu'une égalité stricte,
+    # sans quoi la comparaison ne matche jamais et la fonction sort en silence.
+    was_critical = _leading_digit(old_p) == SN_CRITICAL_PRIORITY
+    is_critical = _leading_digit(new_p) == SN_CRITICAL_PRIORITY
 
     if was_critical == is_critical or not new_p:
         return
