@@ -2,7 +2,7 @@
 
 Convention de fuseau horaire : toutes les dates manipulées ici sont des
 `datetime` NAÏFS (sans tzinfo), interprétés comme de l'heure MURALE LOCALE
-(celle du serveur qui exécute l'API). Les bornes ouvrées (7h-19h) sont donc
+(celle du serveur qui exécute l'API). Les bornes ouvrées (7h-23h) sont donc
 dans le même référentiel que `created_at`, `started_at`, `paused_at`, etc.
 Un ticket créé à 8h locale est bien traité comme 8h ouvrée, sans décalage.
 
@@ -33,9 +33,9 @@ SLA_HOURS = {
     "4-Standard": 96,
 }
 
-# Heures ouvrées : lundi (0) à vendredi (4), 07h00-19h00.
+# Heures ouvrées : lundi (0) à vendredi (4), 07h00-23h00.
 _WORK_START = 7   # 07:00
-_WORK_END = 19    # 19:00
+_WORK_END = 23    # 23:00
 
 # Motifs de mise en attente valides.
 WAIT_MOTIVES = ("contact_principal", "changement", "resolution_probleme")
@@ -92,7 +92,7 @@ def compute_priority(impact: str, urgence: str) -> str:
 # ─────────────────────────────────────────────
 
 def is_business_time(dt: datetime) -> bool:
-    """True si `dt` tombe dans une plage ouvrée (lun-ven, 07h-19h)."""
+    """True si `dt` tombe dans une plage ouvrée (lun-ven, 07h-23h)."""
     if dt.weekday() >= 5:  # 5=samedi, 6=dimanche
         return False
     secs = dt.hour * 3600 + dt.minute * 60 + dt.second
@@ -102,7 +102,7 @@ def is_business_time(dt: datetime) -> bool:
 def add_business_hours(start: datetime, hours: float) -> datetime:
     """Retourne la date `hours` heures OUVRÉES après `start`.
 
-    Heures ouvrées : lun-ven, 07h00-19h00. Les nuits et week-ends sont
+    Heures ouvrées : lun-ven, 07h00-23h00. Les nuits et week-ends sont
     sautés sans consommer de délai.
     """
     remaining = hours * 3600  # secondes

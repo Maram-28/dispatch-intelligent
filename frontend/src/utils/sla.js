@@ -1,5 +1,5 @@
 const WORK_START_H = 7
-const WORK_END_H   = 19
+const WORK_END_H   = 23
 
 export const SLA_TOTAL_SECS = {
   '1-Critique': 8  * 3600,
@@ -63,7 +63,7 @@ export function businessSecsBetween(fromMs, toMs) {
 
 // Point de vérité unique pour "combien de temps ouvré reste-t-il" — reflète
 // EXACTEMENT sla_engine.business_seconds_remaining / sla_percent_remaining
-// (mêmes bornes 7h-19h lun-ven, même gel de la référence sur `pausedAt`
+// (mêmes bornes 7h-23h lun-ven, même gel de la référence sur `pausedAt`
 // pendant une pause manuelle) afin que le Monitor SLA et le widget CountdownTimer
 // n'affichent jamais deux nombres différents pour le même ticket.
 export function getSlaUrgency({ slaDeadline, status, priorite, pausedAt, resolvedAt }, nowMs = Date.now()) {

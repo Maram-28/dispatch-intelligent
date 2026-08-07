@@ -283,7 +283,7 @@ def classify_single(ticket: TicketInput, background_tasks: BackgroundTasks, _: U
         result.entreprise = ticket.entreprise
         result.breve_description = ticket.breve_description
         result.description = ticket.description
-        result.created_at = datetime.now().isoformat()  # heure locale — cohérent avec sla_engine (7h-19h murales)
+        result.created_at = datetime.now().isoformat()  # heure locale — cohérent avec sla_engine (7h-23h murales)
         result.source = "manual"
         result.titre = generate_title(
             ticket.breve_description,
@@ -660,7 +660,7 @@ def run_batch_job(job_id: str, tickets: List[TicketInput]):
     for ticket in tickets:
         try:
             result = classify_ticket(ticket)
-            result.created_at = datetime.now().isoformat()  # heure locale — cohérent avec sla_engine (7h-19h murales)
+            result.created_at = datetime.now().isoformat()  # heure locale — cohérent avec sla_engine (7h-23h murales)
             result.source = "manual"
             result.breve_description = ticket.breve_description
             result.description = ticket.description
@@ -1013,7 +1013,7 @@ def update_my_ticket_status(numero: str, body: StatusUpdate, current_user: User 
     if body.action == "start" and ticket.status != "new":
         return ticket
 
-    now = datetime.now()  # heure locale — cohérent avec sla_engine (7h-19h murales)
+    now = datetime.now()  # heure locale — cohérent avec sla_engine (7h-23h murales)
     try:
         updates = sla_engine.on_status_change(
             ticket, new_status, now,
@@ -1085,7 +1085,7 @@ def update_my_ticket_status(numero: str, body: StatusUpdate, current_user: User 
 def get_my_notifications(current_user: User = Depends(get_current_user)):
     """Retourne les alertes SLA pour les tickets assignés à l'agent connecté."""
     db = load_db()
-    now = datetime.now()  # heure locale — cohérent avec sla_engine (7h-19h murales)
+    now = datetime.now()  # heure locale — cohérent avec sla_engine (7h-23h murales)
     notifications = []
 
     for ticket in db:
