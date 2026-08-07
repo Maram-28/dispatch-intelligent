@@ -348,18 +348,17 @@ def start_scheduler():
     # Intervalle plus court que le watchdog SLA (5 min) : sinon un ticket assigné
     # juste après un cycle attendrait jusqu'à 20 min (15 + 5) avant démarrage
     # automatique au lieu des 15 min annoncées côté plateforme.
-    scheduler.add_job(
-        auto_start_assigned_tickets,
-        "interval",
-        minutes=1,
-        id="auto_start_tickets",
-        replace_existing=True,
-        max_instances=1,
-        coalesce=True,
-    )
+    # Désactivé temporairement (demande explicite) — décommenter pour réactiver
+    # le démarrage automatique du chrono SLA après AUTO_START_DELAY_MINUTES.
+    # scheduler.add_job(
+    #     auto_start_assigned_tickets,
+    #     "interval",
+    #     minutes=1,
+    #     id="auto_start_tickets",
+    #     replace_existing=True,
+    #     max_instances=1,
+    #     coalesce=True,
+    # )
     scheduler.start()
-    logger.info(
-        "[SLA] Watchdog démarré (intervalle : 5 minutes) — démarrage auto à %s min (intervalle : 1 minute)",
-        AUTO_START_DELAY_MINUTES,
-    )
+    logger.info("[SLA] Watchdog démarré (intervalle : 5 minutes) — démarrage auto désactivé")
     return scheduler
