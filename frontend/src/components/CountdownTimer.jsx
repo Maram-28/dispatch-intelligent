@@ -16,6 +16,11 @@ export function CountdownTimer({ slaDeadline, status, priorite, pausedAt, resolv
 
   useEffect(() => {
     if (status !== 'in_progress') return
+    // Refresh immediately on entering/re-entering 'in_progress' (e.g. right
+    // after a resume) — otherwise `now` stays stuck on whatever stale value
+    // it had while frozen during the pause until the first 1s tick fires,
+    // which understates elapsed/breached time in the meantime.
+    setNow(Date.now())
     const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
   }, [status])
