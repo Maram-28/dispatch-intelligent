@@ -95,7 +95,7 @@ function TicketWorkCard({ ticket, onClick }) {
   )
 }
 
-export function AgentDashboardView() {
+export function AgentDashboardView({ openTicketNumero, onTicketOpened } = {}) {
   const { t } = useLanguage()
   const [tickets, setTickets]           = useState([])
   const [loading, setLoading]           = useState(true)
@@ -118,6 +118,18 @@ export function AgentDashboardView() {
     const id = setInterval(fetchTickets, 30_000)
     return () => clearInterval(id)
   }, [fetchTickets])
+
+  // Ouvre automatiquement le ticket ciblé par un deep-link (ex: bouton "Voir
+  // mes tickets" d'un email d'assignation) une fois la liste chargée.
+  useEffect(() => {
+    if (!openTicketNumero) return
+    const match = tickets.find(t => t.numero === openTicketNumero)
+    if (match) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- deriving local state from a prop that resolves asynchronously (ticket list fetch), not a cascading-render antipattern; same false positive as fetchTickets above.
+      setSelectedTicket(match)
+      onTicketOpened?.()
+    }
+  }, [openTicketNumero, tickets, onTicketOpened])
 
   const sortByStatus = (list) => [...list].sort((a, b) => {
     const o = { in_progress: 0, on_hold: 1, new: 2, done: 3 }

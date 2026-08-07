@@ -431,8 +431,10 @@ export function AgentsView({ currentUser, tickets = [] }) {
   const [lastRefresh,   setLastRefresh]   = useState(null)
   const [selectedProfile, setSelectedProfile] = useState(null)
   const [range, setRange] = useState(getDefaultRange)
-  const selectedProfileRef = useRef(null)
-  selectedProfileRef.current = selectedProfile
+const selectedProfileRef = useRef(null)
+  useEffect(() => {
+    selectedProfileRef.current = selectedProfile
+  })
 
   const fetchProfiles = useCallback(async (silent = false) => {
     if (!silent) setLoading(true)
@@ -457,7 +459,8 @@ export function AgentsView({ currentUser, tickets = [] }) {
     }
   }, [])  // stable — ref used instead of state dep
 
-  useEffect(() => {
+useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount + polling, pattern documenté par React
     fetchProfiles()
     const id = setInterval(() => fetchProfiles(true), 30_000)
     return () => clearInterval(id)

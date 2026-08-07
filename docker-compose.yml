@@ -8,6 +8,10 @@ services:
       KEYCLOAK_REALM: lvmh-tickets
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY}
+      # URL publique du frontend déployé (Azure Container Apps) — utilisée pour
+      # construire les liens dans les emails de notification et pour CORS.
+      PLATFORM_URL: https://frontend-smartdispatch.whitepond-b737dca4.polandcentral.azurecontainerapps.io
+      FRONTEND_ORIGIN: https://frontend-smartdispatch.whitepond-b737dca4.polandcentral.azurecontainerapps.io
     volumes:
       - backend-data:/data
     depends_on:

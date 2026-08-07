@@ -53,6 +53,7 @@ export function SLAMonitorView({ tickets, onTicketClick }) {
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount + polling, pattern documenté par React
     fetchAlerts()
     const id = setInterval(fetchAlerts, 60_000)
     return () => clearInterval(id)

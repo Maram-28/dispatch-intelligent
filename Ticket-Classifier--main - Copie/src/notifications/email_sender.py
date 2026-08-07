@@ -70,7 +70,7 @@ class EmailNotifier:
             )
             return False
 
-        ticket_url = f"{self.platform_url}"
+        ticket_url = f"{self.platform_url}/?ticket={ticket_numero}"
 
         msg = MIMEMultipart("alternative")
         msg["Subject"] = f"[Ticket Assigné] {ticket_numero} — {ticket_titre}"
@@ -154,7 +154,7 @@ class EmailNotifier:
             )
             return False
 
-        ticket_url = f"{self.platform_url}"
+        ticket_url = f"{self.platform_url}/?ticket={ticket_numero}"
         subject_label, time_phrase = self._sla_wording(tier, percent_remaining, remaining_hours)
 
         msg = MIMEMultipart("alternative")
@@ -232,7 +232,7 @@ class EmailNotifier:
             )
             return False
 
-        ticket_url = f"{self.platform_url}"
+        ticket_url = f"{self.platform_url}/?ticket={ticket_numero}"
         subject_label = "ESCALADE CRITIQUE" if escalating else "Dé-escalade de Critique"
         color = "#ef4444" if escalating else "#3b82f6"
         verb = "escaladé vers" if escalating else "descendu de"

@@ -40,10 +40,18 @@ function SidebarItem({ icon, label, active, onClick, badge }) {
   )
 }
 
-export function AgentView({ currentUser, onLogout }) {
+export function AgentView({ currentUser, onLogout, deepLinkTicket, onDeepLinkConsumed }) {
   const [tab, setTab]             = useState('tickets')
   const [notifCount, setNotifCount] = useState(0)
   const { t } = useLanguage()
+
+  // Lien de deep-link depuis un email (ex: "Voir mes tickets") : force l'onglet
+  // Tickets, où AgentDashboardView ouvre la fiche du ticket ciblé une fois sa
+  // propre liste chargée.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- deriving the active tab from a prop that resolves asynchronously (OIDC redirect), not a cascading-render antipattern.
+    if (deepLinkTicket) setTab('tickets')
+  }, [deepLinkTicket])
 
   // Poll le compte unifié (alertes SLA + inbox non lues) toutes les 60s
   useEffect(() => {
@@ -141,7 +149,13 @@ export function AgentView({ currentUser, onLogout }) {
       {/* Main */}
       <main className="main-content" id="main-content">
         <AnimatePresence mode="wait">
-          {tab === 'tickets'       && <AgentDashboardView key="tickets" />}
+          {tab === 'tickets'       && (
+            <AgentDashboardView
+              key="tickets"
+              openTicketNumero={deepLinkTicket}
+              onTicketOpened={onDeepLinkConsumed}
+            />
+          )}
           {tab === 'notifications' && <AgentNotificationsView key="notifs" onCountChange={setNotifCount} />}
           {tab === 'profile'       && <AgentProfileView key="profile" />}
           {tab === 'settings'      && <SettingsView key="settings" />}

@@ -35,6 +35,10 @@ function App() {
   const [activeTab, setActiveTab] = useState('Dashboard')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedTicket, setSelectedTicket] = useState(null)
+  // Numéro de ticket ciblé par un lien de deep-link (ex: bouton "Voir mes
+  // tickets" d'un email d'assignation, ?ticket=INC0010120) — consommé une
+  // fois le ticket effectivement ouvert, voir l'effet plus bas.
+  const [deepLinkTicket, setDeepLinkTicket] = useState(null)
   const [classifiedTickets, setClassifiedTickets] = useState([])
   const [isClassifying, setIsClassifying] = useState(false)
   const [lastResult, setLastResult] = useState(null)
@@ -87,7 +91,17 @@ function App() {
         const params = new URLSearchParams(window.location.search)
         const isCallback = params.has('code') && params.has('state')
         if (isCallback) {
-          await userManager.signinRedirectCallback()
+          // Le ticket de deep-link (ex: lien "Voir mes tickets" d'un email
+          // d'assignation, ?ticket=INC0010120) a été transmis à travers la
+          // redirection Keycloak via le `state` OIDC, pas la query string —
+          // Keycloak remplace celle-ci par ses propres ?code=&state=.
+          const oidcState = await userManager.signinRedirectCallback()
+          if (oidcState?.state?.ticket) setDeepLinkTicket(oidcState.state.ticket)
+          window.history.replaceState({}, document.title, window.location.pathname)
+        } else if (params.has('ticket')) {
+          // Session déjà valide (pas de redirection nécessaire) : le paramètre
+          // est encore présent tel quel dans l'URL de départ.
+          setDeepLinkTicket(params.get('ticket'))
           window.history.replaceState({}, document.title, window.location.pathname)
         }
 
@@ -113,7 +127,8 @@ function App() {
         // signinRedirect() lui-même, il redirige déjà le navigateur dès qu'il
         // réussit (voir waitForKeycloak dans utils/api.js pour le détail).
         await waitForKeycloak()
-        await userManager.signinRedirect()
+        const ticketParam = params.get('ticket')
+        await userManager.signinRedirect(ticketParam ? { state: { ticket: ticketParam } } : undefined)
         // signinRedirect() navigue le navigateur hors de cette page dès son
         // succès — authPhase reste "connecting" jusqu'à ce départ, pas de
         // setAuthPhase('done') ici.
@@ -164,8 +179,9 @@ function App() {
     }
   }, [formatTicket])
 
-  useEffect(() => {
+useEffect(() => {
     if (!currentUser) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount + polling, pattern documenté par React (react.dev/learn/synchronizing-with-effects)
     fetchTickets()
     const id = setInterval(fetchTickets, 15_000)
     return () => clearInterval(id)
@@ -268,6 +284,19 @@ function App() {
     return () => clearInterval(id)
   }, [currentUser])
 
+  // Ouvre le ticket ciblé par le deep-link une fois la liste admin chargée
+  // (espace agent : voir AgentView/AgentDashboardView, qui consomment
+  // deepLinkTicket eux-mêmes puisque leurs tickets viennent d'un fetch séparé).
+  useEffect(() => {
+    if (!deepLinkTicket || !currentUser || currentUser.role !== 'admin') return
+    const match = classifiedTickets.find(t => t.id === deepLinkTicket)
+    if (match) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- deriving local state from a prop that resolves asynchronously (ticket list fetch), not a cascading-render antipattern; same false positive as fetchTickets above.
+      setSelectedTicket(match)
+      setDeepLinkTicket(null)
+    }
+  }, [deepLinkTicket, classifiedTickets, currentUser])
+
   const handleTicketUpdated = (updatedResult) => {
     const formatted = formatTicket(updatedResult)
     setClassifiedTickets(prev => prev.map(t => (t.id === formatted.id ? formatted : t)))
@@ -317,7 +346,12 @@ function App() {
     return (
       <>
         {a11ySettings.keyboardNav && <SkipLink />}
-        <AgentView currentUser={currentUser} onLogout={handleLogout} />
+        <AgentView
+          currentUser={currentUser}
+          onLogout={handleLogout}
+          deepLinkTicket={deepLinkTicket}
+          onDeepLinkConsumed={() => setDeepLinkTicket(null)}
+        />
         <ToastContainer toasts={toasts} onRemove={removeToast} />
       </>
     )
